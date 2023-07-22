@@ -1,5 +1,6 @@
 package com.easypan.service;
 
+import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.vo.PaginationResultVo;
 import com.easypan.entity.pojo.UserInfo;
 import com.easypan.entity.query.UserInfoQuery;
@@ -103,4 +104,7 @@ public interface UserInfoService{
 	 */
 	Integer deleteUserInfoByNickname(String nickname);
 
+    SessionWebUserDto login(String email, String password);
+
+	void register(String email, String nickName, String password, String emailCode);
 }

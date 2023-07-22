@@ -2,14 +2,16 @@ package com.easypan.controller;
 
 import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.ShearCaptcha;
+import com.easypan.annotation.GlobalInterceptor;
+import com.easypan.annotation.VerifyParam;
 import com.easypan.entity.constants.Constants;
+import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.vo.ResponseVo;
-import com.easypan.entity.pojo.UserInfo;
-import com.easypan.entity.query.UserInfoQuery;
+import com.easypan.enums.VerifyRegexEnum;
 import com.easypan.exception.BusinessException;
+import com.easypan.service.EmailCodeService;
 import com.easypan.service.UserInfoService;
-import org.apache.tomcat.util.bcel.Const;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,7 +19,6 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 import java.io.IOException;
-import java.util.List;
 
 /**
  * @Author hapZhang
@@ -30,12 +31,13 @@ import java.util.List;
 public class UserInfoController extends ABaseController {
 
     @Resource
+    private EmailCodeService emailCodeService;
+    @Resource
     private UserInfoService userInfoService;
 
     // 生成验证码
     @RequestMapping("/checkCode")
     public void checkCode(HttpServletResponse response, HttpSession session, Integer type) throws IOException {
-
         //定义图形验证码的长、宽、验证码字符数、干扰线宽度
         ShearCaptcha captcha = CaptchaUtil.createShearCaptcha(150, 40, 5, 4);
         response.setHeader("Pragma", "no-cache");
@@ -52,17 +54,61 @@ public class UserInfoController extends ABaseController {
         captcha.write(response.getOutputStream());
     }
 
-    // 邮箱验证码校验
+    // 发送邮箱验证码前的校验
     @RequestMapping("/sendEmailCode")
-    public ResponseVo sendEmailCode(HttpSession session, String email, String checkCode, Integer type) {
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo sendEmailCode(HttpSession session,
+                                    @VerifyParam(required = true) String email,
+                                    @VerifyParam(required = true) String checkCode,
+                                    @VerifyParam(required = true) Integer type) {
         try {
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL))) {
                 throw new BusinessException("图片验证码不正确");
             }
+            emailCodeService.sendEmailCode(email, type);
             return getSuccessResponseVo(null);
         } finally {
             session.getAttribute(Constants.CHECK_CODE_KEY_EMAIL);
         }
-
     }
+
+    @PostMapping("/register")
+    @GlobalInterceptor(checkParams = true, checkLogin = false)
+    public ResponseVo register(HttpSession session,
+                               @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
+                               @VerifyParam(required = true, max = 20) String nickName,
+                               @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password,
+                               @VerifyParam(required = true) String checkCode,
+                               @VerifyParam(required = true) String emailCode) {
+        try {
+            if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
+                throw new BusinessException("图片验证码不正确");
+            }
+            userInfoService.register(email, nickName, password, emailCode);
+            return getSuccessResponseVo(null);
+        } finally {
+            session.removeAttribute(Constants.CHECK_CODE_KEY);
+        }
+    }
+
+
+    @PostMapping("/login")
+    @GlobalInterceptor(checkParams = true, checkLogin = false)
+    public ResponseVo login(HttpSession session,
+                            @VerifyParam(required = true) String email,
+                            @VerifyParam(required = true) String password,
+                            @VerifyParam(required = true) String checkCode) {
+        try {
+            if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
+                throw new BusinessException("图片验证码不正确");
+            }
+            SessionWebUserDto sessionWebUserDto = userInfoService.login(email, password);
+            session.setAttribute(Constants.SESSION_KEY, sessionWebUserDto);
+            return getSuccessResponseVo(sessionWebUserDto);
+        } finally {
+            session.removeAttribute(Constants.CHECK_CODE_KEY);
+        }
+    }
+
+
 }
