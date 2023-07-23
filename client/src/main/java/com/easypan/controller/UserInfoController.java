@@ -14,6 +14,7 @@ import com.easypan.enums.VerifyRegexEnum;
 import com.easypan.exception.BusinessException;
 import com.easypan.service.EmailCodeService;
 import com.easypan.service.UserInfoService;
+import com.easypan.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -153,6 +154,22 @@ public class UserInfoController extends ABaseController {
         } finally {
             session.removeAttribute(Constants.CHECK_CODE_KEY);
         }
+    }
+
+    /**
+     * @date: 2023/7/23 23:18
+     * 修改密码
+     **/
+    @PostMapping("/updatePwd")
+    @GlobalInterceptor(checkParams = true, checkLogin = false)
+    public ResponseVo updatePwd(HttpSession session,
+                                @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        String userId = webUserDto.getUserId();
+        UserInfo userInfo = new UserInfo();
+        userInfo.setPassword(StringUtils.encodeByMD5(password));
+        userInfoService.updateUserInfoByUserId(userInfo, userId);
+        return getSuccessResponseVo(null);
     }
 
     /**
