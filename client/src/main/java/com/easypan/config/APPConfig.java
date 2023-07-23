@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 /**
  * @author: ZhangX
  * @createDate: 2023/7/22
- * @description:
+ * @description: 读取properties文件中的管理员信息
  */
 @Component("appConfig")
 public class APPConfig {
@@ -19,5 +19,8 @@ public class APPConfig {
 
     public String getSendUserName() {
         return sendUserName;
+    }
+    public String getAdminEmails(){
+        return adminEmails;
     }
 }

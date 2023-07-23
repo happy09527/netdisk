@@ -1,9 +1,11 @@
 package com.easypan.service.impl;
 
 import com.easypan.component.RedisComponent;
+import com.easypan.config.APPConfig;
 import com.easypan.entity.constants.Constants;
 import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.dto.SysSettingsDto;
+import com.easypan.entity.dto.UserSpaceDto;
 import com.easypan.entity.enums.UserStatusEnum;
 import com.easypan.entity.query.SimplePage;
 import com.easypan.enums.PageSize;
@@ -15,6 +17,8 @@ import com.easypan.mappers.UserInfoMapper;
 import com.easypan.service.EmailCodeService;
 import com.easypan.service.UserInfoService;
 import com.easypan.utils.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -40,6 +44,9 @@ public class UserInfoServiceImpl implements UserInfoService {
 //    private FileInfoMapper fileInfoMapper;
     @Resource
     private RedisComponent redisComponent;
+
+    @Resource
+    private APPConfig appConfig;
 
     /**
      * 根据条件查询列表
@@ -105,7 +112,7 @@ public class UserInfoServiceImpl implements UserInfoService {
     /**
      * 根据UserId更新
      */
-    public Integer updateUserInfoByUserId(UserInfo bean, Integer userId) {
+    public Integer updateUserInfoByUserId(UserInfo bean, String userId) {
         return this.userInfoMapper.updateByUserId(bean, userId);
     }
 
@@ -181,8 +188,37 @@ public class UserInfoServiceImpl implements UserInfoService {
 
     @Override
     public SessionWebUserDto login(String email, String password) {
-        return null;
+        UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
+        if (userInfo == null) {
+            throw new BusinessException("该用户不存在");
+        }
+        String userPassword = userInfo.getPassword();
+        if (password.equals(userPassword)) {
+            if (userInfo.getStatus() == 0) {
+                throw new BusinessException("账户被禁用，无法登录");
+            }
+            UserInfo updateUserInfo = new UserInfo();
+            updateUserInfo.setLastLoginTime(new Date());
+            this.userInfoMapper.updateByUserId(updateUserInfo, userInfo.getUserId());
+            SessionWebUserDto userDto = new SessionWebUserDto();
+            BeanUtils.copyProperties(userInfo, userDto);
+            if (ArrayUtils.contains(appConfig.getAdminEmails().split(","), userInfo.getEmail())) {
+                userDto.setIsAdmin(true);
+            } else {
+                userDto.setIsAdmin(false);
+            }
+            userDto.setAvatar(userInfo.getQqAvatar());
+            UserSpaceDto userSpaceDto = new UserSpaceDto();
+            userSpaceDto.setUseSpace(userInfo.getUseSpace());
+            userSpaceDto.setTotalSpace(userInfo.getTotalSpace());
+            redisComponent.setUserSpaceUse(userInfo.getUserId(), userSpaceDto);
+            return userDto;
+        } else {
+            throw new BusinessException("密码错误");
+        }
+
     }
+
     /**
      * @date: 2023/7/22 22:41
      * 用户注册。检验验证码是否正确，之后插入用户信息
@@ -193,8 +229,9 @@ public class UserInfoServiceImpl implements UserInfoService {
         if (userInfo != null) {
             throw new BusinessException("用户邮箱已被注册");
         }
-        if (userInfo.getNickname() != null) {
-            throw new BusinessException("用户昵称已被使用");
+        UserInfo nickNameUser = this.userInfoMapper.selectByNickname(nickName);
+        if (null != nickNameUser) {
+            throw new BusinessException("昵称已经存在");
         }
         emailCodeService.checkCode(email, emailCode);
         // 获取随机Id

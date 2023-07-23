@@ -19,7 +19,7 @@ public class Constants {
     public static final Integer LENGTH_5 = 5;
 
     // redis中邮箱消息的键
-    public static final String REDIS_KEY_SYS_SETTING = "easypan:syssetting";
+    public static final String REDIS_KEY_SYS_SETTING = "easypan:syssetting;";
 
     // 邮箱验证码过期时间
     public static final Integer LENGTH_15 = 15;

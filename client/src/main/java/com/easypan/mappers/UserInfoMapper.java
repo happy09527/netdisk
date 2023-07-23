@@ -19,7 +19,7 @@ public interface UserInfoMapper<T, P> extends BaseMapper {
     /**
      * 根据UserId更新
      */
-    Integer updateByUserId(@Param("bean") T t, @Param("userId") Integer userId);
+    Integer updateByUserId(@Param("bean") T t, @Param("userId") String userId);
 
     /**
      * 根据UserId删除

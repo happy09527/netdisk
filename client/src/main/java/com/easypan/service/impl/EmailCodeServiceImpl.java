@@ -81,7 +81,7 @@ public class EmailCodeServiceImpl implements EmailCodeService {
     public void checkCode(String email, String code) {
         EmailCode emailCode = this.emailCodeMapper.selectByEmailAndCode(email,code);
         if(emailCode == null){
-            throw  new BusinessException("邮箱验证不正确");
+            throw  new BusinessException("邮箱验证码不正确");
         }
         if(emailCode.getStatus()==1 || System.currentTimeMillis()-emailCode.getCreateTime().getTime() > Constants.LENGTH_15 * 60 * 1000 ){
             throw new BusinessException("邮箱验证码失效");

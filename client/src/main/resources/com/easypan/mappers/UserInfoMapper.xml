@@ -125,7 +125,7 @@
 	<insert id="insert" parameterType="com.easypan.entity.pojo.UserInfo">
 
 			INSERT INTO db_user_info
-		<trim prefix="VALUES (" suffix=")" suffixOverrides=",">
+		<trim prefix="(" suffix=")" suffixOverrides=",">
 			<if test="bean.userId != null">
 				user_id,
 			</if>
