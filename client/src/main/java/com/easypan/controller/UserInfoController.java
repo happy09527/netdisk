@@ -4,21 +4,31 @@ import cn.hutool.captcha.CaptchaUtil;
 import cn.hutool.captcha.ShearCaptcha;
 import com.easypan.annotation.GlobalInterceptor;
 import com.easypan.annotation.VerifyParam;
+import com.easypan.component.RedisComponent;
+import com.easypan.config.APPConfig;
 import com.easypan.entity.constants.Constants;
 import com.easypan.entity.dto.SessionWebUserDto;
+import com.easypan.entity.pojo.UserInfo;
 import com.easypan.entity.vo.ResponseVo;
 import com.easypan.enums.VerifyRegexEnum;
 import com.easypan.exception.BusinessException;
 import com.easypan.service.EmailCodeService;
 import com.easypan.service.UserInfoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
+import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 
 /**
  * @Author hapZhang
@@ -29,11 +39,18 @@ import java.io.IOException;
 
 @RestController("userInfoController")
 public class UserInfoController extends ABaseController {
-
+    private static final Logger logger = LoggerFactory.getLogger(UserInfoController.class);
+    private static final String CONTENT_TYPE = "Content-Type";
+    private static final String CONTENT_TYPE_VALUE = "application/json;charset=UTF-8";
     @Resource
     private EmailCodeService emailCodeService;
     @Resource
     private UserInfoService userInfoService;
+    @Resource
+    private APPConfig appConfig;
+
+    @Resource
+    private RedisComponent redisComponent;
 
     // 生成验证码
     @RequestMapping("/checkCode")
@@ -72,6 +89,10 @@ public class UserInfoController extends ABaseController {
         }
     }
 
+    /**
+     * @date: 2023/7/23 8:39
+     * 注册
+     **/
     @PostMapping("/register")
     @GlobalInterceptor(checkParams = true, checkLogin = false)
     public ResponseVo register(HttpSession session,
@@ -91,12 +112,15 @@ public class UserInfoController extends ABaseController {
         }
     }
 
-
+    /**
+     * @date: 2023/7/23 8:33
+     * 登录功能
+     **/
     @PostMapping("/login")
     @GlobalInterceptor(checkParams = true, checkLogin = false)
     public ResponseVo login(HttpSession session,
-                            @VerifyParam(required = true) String email,
-                            @VerifyParam(required = true) String password,
+                            @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
+                            @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password,
                             @VerifyParam(required = true) String checkCode) {
         try {
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
@@ -110,5 +134,129 @@ public class UserInfoController extends ABaseController {
         }
     }
 
+    /**
+     * @date: 2023/7/23 8:34
+     * 重置密码
+     **/
+    @PostMapping("/resetPwd")
+    @GlobalInterceptor(checkParams = true, checkLogin = false)
+    public ResponseVo resetPwd(HttpSession session,
+                               @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
+                               @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password,
+                               @VerifyParam(required = true) String checkCode) {
+        try {
+            if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
+                throw new BusinessException("图片验证码不正确");
+            }
+            userInfoService.resetPwd(email, password, checkCode);
+            return getSuccessResponseVo(null);
+        } finally {
+            session.removeAttribute(Constants.CHECK_CODE_KEY);
+        }
+    }
 
+    /**
+     * @date: 2023/7/23 10:27
+     * 获取用户头像
+     **/
+    @PostMapping("/getAvatar/{userId}")
+    @GlobalInterceptor(checkParams = true, checkLogin = false)
+    public void getAvatar(HttpServletResponse response, HttpSession session,
+                          @VerifyParam(required = true) @PathVariable(name = "userId") String userId) {
+        String avatarFolderName = Constants.FILE_FOLDER_FILE + Constants.FILE_FOLDER_AVATAR_NAME;
+        File folder = new File(appConfig.getProjectFolder() + avatarFolderName);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+        // 用户个人头像路径
+        String avatarPath = appConfig.getProjectFolder() + avatarFolderName + "/" + userId + Constants.AVATAR_SUFFIX;
+        File file = new File(avatarPath);
+        if (!file.exists()) {
+            // 默认头像路径
+            avatarPath = appConfig.getProjectFolder() + avatarFolderName + "/" + Constants.AVATAR_DEFUALT;
+            // 获取系统默认头像
+            if (!new File(avatarPath).exists()) {
+                // 获取默认头像失败
+                printNoDefaultImage(response);
+                return;
+            }
+        }
+        response.setContentType("image/jpg");
+        readFile(response, avatarPath);
+    }
+
+    private void printNoDefaultImage(HttpServletResponse response) {
+        response.setHeader(CONTENT_TYPE, CONTENT_TYPE_VALUE);
+        response.setStatus(HttpStatus.OK.value());
+        PrintWriter writer = null;
+        try {
+            writer = response.getWriter();
+            writer.print("请在头像目录下放置默认头像default_avatar.jpg");
+            writer.close();
+        } catch (Exception e) {
+            logger.error("输出无默认图片失败", e);
+        } finally {
+            writer.close();
+        }
+    }
+
+    /**
+     * @date: 2023/7/23 22:56
+     * 获取用户信息
+     **/
+    @RequestMapping("/getUserInfo")
+    @GlobalInterceptor
+    public ResponseVo getUserInfo(HttpSession session) {
+        SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
+        return getSuccessResponseVo(sessionWebUserDto);
+    }
+
+    /**
+     * @date: 2023/7/23 22:56
+     * 获取用户内存信息
+     **/
+    @RequestMapping("/getUserSpace")
+    @GlobalInterceptor
+    public ResponseVo getUserSpace(HttpSession session) {
+        SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
+        return getSuccessResponseVo(redisComponent.getUserSpaceUse(sessionWebUserDto.getUserId()));
+    }
+
+    /**
+     * @date: 2023/7/23 22:57
+     * 推出登录
+     **/
+    @RequestMapping("/logout")
+    @GlobalInterceptor
+    public ResponseVo logout(HttpSession session) {
+        session.invalidate();
+        return getSuccessResponseVo(null);
+    }
+
+    /**
+     * @date: 2023/7/23 23:02
+     * 更新用户头像。 拿到用户信息，在相应路径下进行文件存储
+     **/
+    @RequestMapping("/updateUserAvatar")
+    @GlobalInterceptor
+    public ResponseVo updateUserAvatar(HttpSession session, MultipartFile avatar) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        String baserFolder = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE;
+        File targetFileFolder = new File(baserFolder + Constants.FILE_FOLDER_AVATAR_NAME);
+        if (!targetFileFolder.exists()) {
+            targetFileFolder.mkdirs();
+        }
+        File targetFile = new File(targetFileFolder.getPath() + "/" + webUserDto.getUserId() + Constants.AVATAR_SUFFIX);
+        try {
+            avatar.transferTo(targetFile);
+        } catch (Exception e) {
+            logger.error("上传头像失败", e);
+        }
+        UserInfo userInfo = new UserInfo();
+        userInfo.setQqAvatar("");
+        userInfoService.updateUserInfoByUserId(userInfo, webUserDto.getUserId());
+        webUserDto.setAvatar(null);
+        session.setAttribute(Constants.SESSION_KEY, webUserDto);
+        return getSuccessResponseVo(null);
+    }
 }

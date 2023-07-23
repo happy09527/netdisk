@@ -1,4 +1,4 @@
-package com.easypan.config;
+package com.easypan.utils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,9 +13,9 @@ import java.util.concurrent.TimeUnit;
  * @createDate: 2023/7/22
  * @description:
  */
-@Component("redisConfig")
-public class RedisConfig<V> {
-    private static final Logger logger = LoggerFactory.getLogger(RedisConfig.class);
+@Component("redisUtils")
+public class RedisUtils<V> {
+    private static final Logger logger = LoggerFactory.getLogger(RedisUtils.class);
     @Resource
     private RedisTemplate<String, V> redisTemplate;
 
@@ -32,7 +32,10 @@ public class RedisConfig<V> {
             return false;
         }
     }
-
+    /**
+     * @date: 2023/7/23 21:19
+     * 存储有过期时间的键值对
+     **/
     public boolean setExpires(String key, V value, long time) {
         try {
             if (time > 0) {

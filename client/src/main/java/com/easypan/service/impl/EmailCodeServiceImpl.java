@@ -4,10 +4,7 @@ import com.easypan.component.RedisComponent;
 import com.easypan.config.APPConfig;
 import com.easypan.entity.constants.Constants;
 import com.easypan.entity.pojo.UserInfo;
-import com.easypan.entity.query.SimplePage;
 import com.easypan.entity.query.UserInfoQuery;
-import com.easypan.enums.PageSize;
-import com.easypan.entity.vo.PaginationResultVo;
 import com.easypan.entity.pojo.EmailCode;
 import com.easypan.entity.query.EmailCodeQuery;
 import com.easypan.exception.BusinessException;
@@ -26,7 +23,6 @@ import javax.annotation.Resource;
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import java.util.Date;
-import java.util.List;
 
 /**
  * @Author hapZhang
@@ -73,17 +69,18 @@ public class EmailCodeServiceImpl implements EmailCodeService {
         emailCode.setCreateTime(new Date());
         emailCodeMapper.insert(emailCode);
     }
+
     /**
      * @date: 2023/7/22 22:47
      * 验证邮箱验证码是否正确
      **/
     @Override
     public void checkCode(String email, String code) {
-        EmailCode emailCode = this.emailCodeMapper.selectByEmailAndCode(email,code);
-        if(emailCode == null){
-            throw  new BusinessException("邮箱验证码不正确");
+        EmailCode emailCode = this.emailCodeMapper.selectByEmailAndCode(email, code);
+        if (emailCode == null) {
+            throw new BusinessException("邮箱验证码不正确");
         }
-        if(emailCode.getStatus()==1 || System.currentTimeMillis()-emailCode.getCreateTime().getTime() > Constants.LENGTH_15 * 60 * 1000 ){
+        if (emailCode.getStatus() == 1 || System.currentTimeMillis() - emailCode.getCreateTime().getTime() > Constants.LENGTH_15 * 60 * 1000) {
             throw new BusinessException("邮箱验证码失效");
         }
         emailCodeMapper.disableEmailCode(email);
@@ -106,7 +103,6 @@ public class EmailCodeServiceImpl implements EmailCodeService {
             mimeMessageHelper.setSubject(redisComponent.getSysSettingDto().getRegisterEmailTitle());
             // 发送内容
             mimeMessageHelper.setText(String.format(redisComponent.getSysSettingDto().getRegisterEmailContent(), code));
-            System.out.println(redisComponent.getSysSettingDto()+"aaaaaaaaaaaaaaaaaaaa");
             // 发送时间
             mimeMessageHelper.setSentDate(new Date());
             // 发送
@@ -115,6 +111,5 @@ public class EmailCodeServiceImpl implements EmailCodeService {
             logger.error("邮件发送失败", e);
             throw new RuntimeException("邮件发送异常");
         }
-
     }
 }

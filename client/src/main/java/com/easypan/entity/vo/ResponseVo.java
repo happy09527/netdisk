@@ -1,5 +1,8 @@
 package com.easypan.entity.vo;
 
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 public class ResponseVo<T> {
     private String status;
     private Integer code;
@@ -22,14 +25,6 @@ public class ResponseVo<T> {
         this.code = code;
     }
 
-    public String getInfo() {
-        return info;
-    }
-
-    public void setInfo(String info) {
-        this.info = info;
-    }
-
     public T getData() {
         return data;
     }
@@ -37,4 +32,13 @@ public class ResponseVo<T> {
     public void setData(T data) {
         this.data = data;
     }
+
+    public String getInfo() {
+        return info;
+    }
+
+    public void setInfo(String info) {
+        this.info = info;
+    }
 }
+

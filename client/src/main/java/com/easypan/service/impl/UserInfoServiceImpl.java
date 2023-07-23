@@ -7,6 +7,7 @@ import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.dto.SysSettingsDto;
 import com.easypan.entity.dto.UserSpaceDto;
 import com.easypan.entity.enums.UserStatusEnum;
+import com.easypan.entity.pojo.EmailCode;
 import com.easypan.entity.query.SimplePage;
 import com.easypan.enums.PageSize;
 import com.easypan.entity.vo.PaginationResultVo;
@@ -20,6 +21,7 @@ import com.easypan.utils.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import java.util.Date;
@@ -185,7 +187,9 @@ public class UserInfoServiceImpl implements UserInfoService {
     public Integer deleteUserInfoByNickname(String nickname) {
         return this.userInfoMapper.deleteByNickname(nickname);
     }
-
+    /**
+     * 登录
+     **/
     @Override
     public SessionWebUserDto login(String email, String password) {
         UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
@@ -211,7 +215,7 @@ public class UserInfoServiceImpl implements UserInfoService {
             UserSpaceDto userSpaceDto = new UserSpaceDto();
             userSpaceDto.setUseSpace(userInfo.getUseSpace());
             userSpaceDto.setTotalSpace(userInfo.getTotalSpace());
-            redisComponent.setUserSpaceUse(userInfo.getUserId(), userSpaceDto);
+            redisComponent.saveUserSpaceUse(userInfo.getUserId(), userSpaceDto);
             return userDto;
         } else {
             throw new BusinessException("密码错误");
@@ -249,4 +253,20 @@ public class UserInfoServiceImpl implements UserInfoService {
         this.userInfoMapper.insert(userInfo);
     }
 
+    /**
+     * @date: 2023/7/23 20:18
+     * 重置密码
+     **/
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void resetPwd(String email, String password, String code) {
+        UserInfo userInfo = this.userInfoMapper.selectByEmail(email);
+        if (userInfo == null) {
+            throw new BusinessException("用户邮箱不存在");
+        }
+        this.emailCodeService.checkCode(email, code);
+        UserInfo updateInfo = new UserInfo();
+        updateInfo.setPassword(StringUtils.encodeByMD5(password));
+        this.userInfoMapper.updateByEmail(updateInfo, email);
+    }
 }
