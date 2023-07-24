@@ -1,6 +1,6 @@
 package com.easypan.entity.query;
 
-import com.easypan.enums.PageSize;;
+import com.easypan.entity.enums.PageSize;;
 public class SimplePage {
     private Integer pageNo;
     private Integer countTotal;

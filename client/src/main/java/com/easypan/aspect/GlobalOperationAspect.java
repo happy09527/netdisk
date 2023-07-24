@@ -2,7 +2,9 @@ package com.easypan.aspect;
 
 import com.easypan.annotation.GlobalInterceptor;
 import com.easypan.annotation.VerifyParam;
-import com.easypan.enums.ResponseCodeEnum;
+import com.easypan.entity.constants.Constants;
+import com.easypan.entity.dto.SessionWebUserDto;
+import com.easypan.entity.enums.ResponseCodeEnum;
 import com.easypan.exception.BusinessException;
 import com.easypan.utils.StringUtils;
 import com.easypan.utils.VerifyUtils;
@@ -14,7 +16,11 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
@@ -79,8 +85,21 @@ public class GlobalOperationAspect {
         }
     }
 
+    /**
+     * @date: 2023/7/24 16:06
+     * 检验登录与管理员权限
+     **/
     private void checkLogin(Boolean checkAdmin) {
-
+        // springboot获取session信息
+        HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
+        HttpSession session = request.getSession();
+        SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
+        if (webUserDto == null) {
+            throw new BusinessException(ResponseCodeEnum.CODE_700);
+        }
+        if (checkAdmin && !webUserDto.getIsAdmin()) {
+            throw new BusinessException(ResponseCodeEnum.CODE_404);
+        }
     }
 
     /**
@@ -139,12 +158,14 @@ public class GlobalOperationAspect {
     private void checkValue(Object value, VerifyParam verifyParam) throws BusinessException {
         Boolean isEmpty = value == null || StringUtils.isEmpty(value.toString());
         Integer length = value == null ? 0 : value.toString().length();
+
         /**
          * 校验空
          */
         if (isEmpty && verifyParam.required()) {
             throw new BusinessException(ResponseCodeEnum.CODE_600);
         }
+
         /**
          * 校验长度
          */

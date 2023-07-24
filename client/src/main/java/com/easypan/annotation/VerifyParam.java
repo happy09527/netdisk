@@ -1,6 +1,6 @@
 package com.easypan.annotation;
 
-import com.easypan.enums.VerifyRegexEnum;
+import com.easypan.entity.enums.VerifyRegexEnum;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

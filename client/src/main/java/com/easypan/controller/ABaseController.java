@@ -2,8 +2,10 @@ package com.easypan.controller;
 
 import com.easypan.entity.constants.Constants;
 import com.easypan.entity.dto.SessionWebUserDto;
-import com.easypan.enums.ResponseCodeEnum;;
+import com.easypan.entity.enums.ResponseCodeEnum;;
+import com.easypan.entity.vo.PaginationResultVo;
 import com.easypan.entity.vo.ResponseVo;
+import com.easypan.utils.CopyUtils;
 import com.easypan.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;;import javax.servlet.http.HttpServletResponse;
@@ -77,5 +79,19 @@ public class ABaseController {
     public SessionWebUserDto getUserInfoFromSession(HttpSession session) {
         SessionWebUserDto sessionAttribute = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         return sessionAttribute;
+    }
+
+    /**
+     * @date: 2023/7/24 22:02
+     * 将对象几个属性去除
+     **/
+    protected <S, T> PaginationResultVo<T> convert2PaginationVO(PaginationResultVo<S> result, Class<T> clazz) {
+        PaginationResultVo<T> resultVO = new PaginationResultVo<>();
+        resultVO.setList(CopyUtils.copyList(result.getList(), clazz));
+        resultVO.setPageNo(result.getPageNo());
+        resultVO.setPageSize(result.getPageSize());
+        resultVO.setPageTotal(result.getPageTotal());
+        resultVO.setTotalCount(result.getTotalCount());
+        return resultVO;
     }
 }

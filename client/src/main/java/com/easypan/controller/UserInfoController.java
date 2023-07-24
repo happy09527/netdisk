@@ -10,7 +10,7 @@ import com.easypan.entity.constants.Constants;
 import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.pojo.UserInfo;
 import com.easypan.entity.vo.ResponseVo;
-import com.easypan.enums.VerifyRegexEnum;
+import com.easypan.entity.enums.VerifyRegexEnum;
 import com.easypan.exception.BusinessException;
 import com.easypan.service.EmailCodeService;
 import com.easypan.service.UserInfoService;
@@ -18,10 +18,7 @@ import com.easypan.utils.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -74,7 +71,7 @@ public class UserInfoController extends ABaseController {
 
     // 发送邮箱验证码前的校验
     @RequestMapping("/sendEmailCode")
-    @GlobalInterceptor(checkParams = true)
+    @GlobalInterceptor(checkParams = true, checkLogin = false)
     public ResponseVo sendEmailCode(HttpSession session,
                                     @VerifyParam(required = true) String email,
                                     @VerifyParam(required = true) String checkCode,
@@ -94,7 +91,7 @@ public class UserInfoController extends ABaseController {
      * @date: 2023/7/23 8:39
      * 注册
      **/
-    @PostMapping("/register")
+    @RequestMapping("/register")
     @GlobalInterceptor(checkParams = true, checkLogin = false)
     public ResponseVo register(HttpSession session,
                                @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
@@ -117,11 +114,11 @@ public class UserInfoController extends ABaseController {
      * @date: 2023/7/23 8:33
      * 登录功能
      **/
-    @PostMapping("/login")
+    @RequestMapping("/login")
     @GlobalInterceptor(checkParams = true, checkLogin = false)
     public ResponseVo login(HttpSession session,
                             @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
-                            @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password,
+                            @VerifyParam(required = true) String password,
                             @VerifyParam(required = true) String checkCode) {
         try {
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
@@ -139,17 +136,18 @@ public class UserInfoController extends ABaseController {
      * @date: 2023/7/23 8:34
      * 重置密码
      **/
-    @PostMapping("/resetPwd")
+    @RequestMapping("/resetPwd")
     @GlobalInterceptor(checkParams = true, checkLogin = false)
     public ResponseVo resetPwd(HttpSession session,
                                @VerifyParam(required = true, regex = VerifyRegexEnum.EMAIL, max = 150) String email,
                                @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password,
-                               @VerifyParam(required = true) String checkCode) {
+                               @VerifyParam(required = true) String checkCode,
+                               @VerifyParam(required = true) String emailCode) {
         try {
             if (!checkCode.equalsIgnoreCase((String) session.getAttribute(Constants.CHECK_CODE_KEY))) {
                 throw new BusinessException("图片验证码不正确");
             }
-            userInfoService.resetPwd(email, password, checkCode);
+            userInfoService.resetPwd(email, password, emailCode);
             return getSuccessResponseVo(null);
         } finally {
             session.removeAttribute(Constants.CHECK_CODE_KEY);
@@ -160,8 +158,8 @@ public class UserInfoController extends ABaseController {
      * @date: 2023/7/23 23:18
      * 修改密码
      **/
-    @PostMapping("/updatePwd")
-    @GlobalInterceptor(checkParams = true, checkLogin = false)
+    @RequestMapping("/updatePwd")
+    @GlobalInterceptor(checkParams = true)
     public ResponseVo updatePwd(HttpSession session,
                                 @VerifyParam(required = true, regex = VerifyRegexEnum.PASSWORD, min = 8, max = 18) String password) {
         SessionWebUserDto webUserDto = getUserInfoFromSession(session);
@@ -176,7 +174,7 @@ public class UserInfoController extends ABaseController {
      * @date: 2023/7/23 10:27
      * 获取用户头像
      **/
-    @PostMapping("/getAvatar/{userId}")
+    @RequestMapping("/getAvatar/{userId}")
     @GlobalInterceptor(checkParams = true, checkLogin = false)
     public void getAvatar(HttpServletResponse response, HttpSession session,
                           @VerifyParam(required = true) @PathVariable(name = "userId") String userId) {
@@ -222,7 +220,7 @@ public class UserInfoController extends ABaseController {
      * 获取用户信息
      **/
     @RequestMapping("/getUserInfo")
-    @GlobalInterceptor
+    @GlobalInterceptor(checkParams = true)
     public ResponseVo getUserInfo(HttpSession session) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
         return getSuccessResponseVo(sessionWebUserDto);
@@ -232,9 +230,9 @@ public class UserInfoController extends ABaseController {
      * @date: 2023/7/23 22:56
      * 获取用户内存信息
      **/
-    @RequestMapping("/getUserSpace")
-    @GlobalInterceptor
-    public ResponseVo getUserSpace(HttpSession session) {
+    @RequestMapping("/getUseSpace")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo getUseSpace(HttpSession session) {
         SessionWebUserDto sessionWebUserDto = getUserInfoFromSession(session);
         return getSuccessResponseVo(redisComponent.getUserSpaceUse(sessionWebUserDto.getUserId()));
     }
@@ -244,7 +242,6 @@ public class UserInfoController extends ABaseController {
      * 推出登录
      **/
     @RequestMapping("/logout")
-    @GlobalInterceptor
     public ResponseVo logout(HttpSession session) {
         session.invalidate();
         return getSuccessResponseVo(null);
@@ -255,7 +252,7 @@ public class UserInfoController extends ABaseController {
      * 更新用户头像。 拿到用户信息，在相应路径下进行文件存储
      **/
     @RequestMapping("/updateUserAvatar")
-    @GlobalInterceptor
+    @GlobalInterceptor(checkParams = true)
     public ResponseVo updateUserAvatar(HttpSession session, MultipartFile avatar) {
         SessionWebUserDto webUserDto = getUserInfoFromSession(session);
         String baserFolder = appConfig.getProjectFolder() + Constants.FILE_FOLDER_FILE;

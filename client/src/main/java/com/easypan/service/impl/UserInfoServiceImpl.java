@@ -7,9 +7,8 @@ import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.dto.SysSettingsDto;
 import com.easypan.entity.dto.UserSpaceDto;
 import com.easypan.entity.enums.UserStatusEnum;
-import com.easypan.entity.pojo.EmailCode;
 import com.easypan.entity.query.SimplePage;
-import com.easypan.enums.PageSize;
+import com.easypan.entity.enums.PageSize;
 import com.easypan.entity.vo.PaginationResultVo;
 import com.easypan.entity.pojo.UserInfo;
 import com.easypan.entity.query.UserInfoQuery;
@@ -220,7 +219,6 @@ public class UserInfoServiceImpl implements UserInfoService {
         } else {
             throw new BusinessException("密码错误");
         }
-
     }
 
     /**

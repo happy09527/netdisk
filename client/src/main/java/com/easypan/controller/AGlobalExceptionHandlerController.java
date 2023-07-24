@@ -1,6 +1,6 @@
 package com.easypan.controller;
 
-import com.easypan.enums.ResponseCodeEnum;;
+import com.easypan.entity.enums.ResponseCodeEnum;;
 import com.easypan.entity.vo.ResponseVo;;
 import com.easypan.exception.BusinessException;;
 import org.slf4j.Logger;

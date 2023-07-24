@@ -1,6 +1,6 @@
 package com.easypan.exception;
 
-import com.easypan.enums.ResponseCodeEnum;
+import com.easypan.entity.enums.ResponseCodeEnum;
 
 public class BusinessException extends RuntimeException {
 

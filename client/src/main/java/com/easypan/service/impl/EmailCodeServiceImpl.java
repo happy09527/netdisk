@@ -77,6 +77,7 @@ public class EmailCodeServiceImpl implements EmailCodeService {
     @Override
     public void checkCode(String email, String code) {
         EmailCode emailCode = this.emailCodeMapper.selectByEmailAndCode(email, code);
+
         if (emailCode == null) {
             throw new BusinessException("邮箱验证码不正确");
         }

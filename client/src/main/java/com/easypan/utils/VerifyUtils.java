@@ -1,6 +1,6 @@
 package com.easypan.utils;
 
-import com.easypan.enums.VerifyRegexEnum;
+import com.easypan.entity.enums.VerifyRegexEnum;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

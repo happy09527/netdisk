@@ -1,5 +1,6 @@
 package com.easypan.mappers;
 
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 /**
@@ -7,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
  * @Description 邮箱验证码Mapper
  * @Date 2023/07/21 21:37:32
  */
+@Mapper
 public interface EmailCodeMapper<T, P> extends BaseMapper {
     /**
      * 根据EmailAndCode查询

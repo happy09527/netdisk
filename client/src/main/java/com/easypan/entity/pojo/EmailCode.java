@@ -1,7 +1,5 @@
 package com.easypan.entity.pojo;
 
-import com.easypan.enums.DateTimePatternEnum;
-import com.easypan.utils.DateUtils;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
