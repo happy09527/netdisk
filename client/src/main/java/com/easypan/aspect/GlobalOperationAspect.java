@@ -95,7 +95,7 @@ public class GlobalOperationAspect {
         HttpSession session = request.getSession();
         SessionWebUserDto webUserDto = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         if (webUserDto == null) {
-            throw new BusinessException(ResponseCodeEnum.CODE_700);
+            throw new BusinessException(ResponseCodeEnum.CODE_901);
         }
         if (checkAdmin && !webUserDto.getIsAdmin()) {
             throw new BusinessException(ResponseCodeEnum.CODE_404);

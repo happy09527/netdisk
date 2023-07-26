@@ -109,4 +109,6 @@ public interface UserInfoService{
 	void register(String email, String nickName, String password, String emailCode);
 
 	void resetPwd(String email, String password,String emailCode);
+
+    Integer updateUseSpace(String userId, Long useSpace, Long totalSize);
 }

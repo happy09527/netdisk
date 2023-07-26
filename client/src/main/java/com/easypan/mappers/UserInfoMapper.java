@@ -1,5 +1,6 @@
 package com.easypan.mappers;
 
+import com.easypan.entity.dto.UserSpaceDto;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -71,5 +72,9 @@ public interface UserInfoMapper<T, P> extends BaseMapper {
      */
     Integer deleteByNickname(@Param("nickname") String nickname);
 
-
+    /**
+     * @date: 2023/7/25 10:40
+     * 修改用户空间内存信息
+     **/
+    Integer updateUseSpace(@Param("userId") String userId, @Param("useSpace") Long useSpace, @Param("totalSpace") Long totalSpace);
 }

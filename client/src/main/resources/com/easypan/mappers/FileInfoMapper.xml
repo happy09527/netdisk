@@ -170,7 +170,7 @@
         SELECT
         <include refid="base_column_list"/>
         <if test="query.queryNickName!=null and query.queryNickName">
-            ,(select nick_name from user_info u where u.user_id = f.user_id) nickName
+            ,(select nick_name from db_user_info u where u.user_id = f.user_id) nickName
         </if>
         FROM db_file_info f
         <include refid="query_condition"/>
@@ -738,11 +738,11 @@
         </if>
     </delete>
 
-    <select id="selectUseSpace" resultType="java.lang.Long">
-    select IFNULL(sum(file_size), 0)
-    from db_file_info
-    where user_id = #{userId}
-</select>
+    <select id="selectUseSpace" parameterType="String" resultType="java.lang.Long">
+        SELECT IFNULL(SUM(file_size), 0)
+        FROM db_file_info
+        WHERE user_id = #{userId};
+    </select>
 
     <delete id="deleteFileByUserId">
         delete
@@ -750,10 +750,10 @@
         where user_id = #{userId}
     </delete>
 
-<!--    <select id="selectUseSpace">-->
-<!--        select NULLIF(0, sum(file_size))-->
-<!--        from db_file_info-->
-<!--        where user_id = #{userId}-->
-<!--    </select>-->
+    <!--    <select id="selectUseSpace">-->
+    <!--        select NULLIF(0, sum(file_size))-->
+    <!--        from db_file_info-->
+    <!--        where user_id = #{userId}-->
+    <!--    </select>-->
 
 </mapper>

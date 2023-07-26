@@ -20,5 +20,7 @@ public interface FileInfoService {
     PaginationResultVo<FileInfo> findListByPage(FileInfoQuery param);
 
 
-    UploadResultDto uploadFile(SessionWebUserDto userDto, MultipartFile file, String fileId, FileInfoQuery fileInfoQuery, String filePid, String fileName, String fileMd5, Integer chunkIndex, Integer chunks);
+    UploadResultDto uploadFile(SessionWebUserDto userDto, MultipartFile file, String fileId, String filePid, String fileName, String fileMd5, Integer chunkIndex, Integer chunks);
+
+    Long selectUseSpace(String userId);
 }

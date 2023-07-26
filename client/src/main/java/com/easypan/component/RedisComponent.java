@@ -1,5 +1,8 @@
 package com.easypan.component;
 
+import com.easypan.entity.pojo.FileInfo;
+import com.easypan.entity.query.FileInfoQuery;
+import com.easypan.mappers.FileInfoMapper;
 import com.easypan.utils.RedisUtils;
 import com.easypan.entity.constants.Constants;
 import com.easypan.entity.dto.SysSettingsDto;
@@ -17,6 +20,8 @@ import javax.annotation.Resource;
 public class RedisComponent {
     @Resource
     private RedisUtils redisUtils;
+    @Resource
+    private FileInfoMapper<FileInfo, FileInfoQuery> fileInfoMapper;
 
     /**
      * @date: 2023/7/23 21:28
@@ -48,11 +53,45 @@ public class RedisComponent {
         UserSpaceDto userSpaceDto = (UserSpaceDto) redisUtils.get(Constants.REDIS_KEY_USER_SPACE_USE + userId);
         if (userSpaceDto == null) {
             userSpaceDto = new UserSpaceDto();
-            // TODO 查询当前用户内存信息
-            userSpaceDto.setUseSpace(0L);
+            userSpaceDto.setUseSpace(fileInfoMapper.selectUseSpace(userId));
             userSpaceDto.setTotalSpace(getSysSettingDto().getUserInitUseSpace() * Constants.MB);
             saveUserSpaceUse(userId, userSpaceDto);
         }
         return userSpaceDto;
+    }
+
+    /**
+     * @date: 2023/7/25 11:39
+     * 存储临时文件所占空间大小
+     **/
+    public void saveFileTempSize(String userId, String fileId, Long fileSize) {
+        long currentSize = getFileTempSize(userId, fileId);
+        redisUtils.setExpires(Constants.REDIS_KEY_USER_FILE_TEMP_SIZE + userId + fileId, currentSize + fileSize, Constants.REDIS_KEY_EXPIRES_ONE_HOUR);
+    }
+
+    /**
+     * @date: 2023/7/25 11:34
+     * 获取上传文件临时存储空间大小
+     **/
+    public Long getFileTempSize(String userId, String fileId) {
+        Long currentSize = getFileSizeFromRedis(Constants.REDIS_KEY_USER_FILE_TEMP_SIZE + userId + fileId);
+        return currentSize;
+    }
+
+    /**
+     * @date: 2023/7/25 11:35
+     * 从redis获取信息。
+     **/
+    private Long getFileSizeFromRedis(String key) {
+        Object sizeObject = redisUtils.get(key);
+        if (sizeObject == null) {
+            return 0L;
+        }
+        if (sizeObject instanceof Integer) {
+            return ((Integer) sizeObject).longValue();
+        } else if (sizeObject instanceof Long) {
+            return (Long) sizeObject;
+        }
+        return 0L;
     }
 }

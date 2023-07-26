@@ -53,21 +53,22 @@ public class FileInfoController extends CommonFileController {
         PaginationResultVo resultVo = fileInfoService.findListByPage(query);
         return getSuccessResponseVo(convert2PaginationVO(resultVo, FileInfoVO.class));
     }
-
+    /**
+     * @date: 2023/7/25 9:33
+     * 上传文件服务
+     **/
     @RequestMapping("/uploadFile")
     @GlobalInterceptor(checkParams = true, checkLogin = true)
     public ResponseVo uploadFile(HttpSession session,
                                  String fileId,
-                                 FileInfoQuery fileInfoQuery,
                                  MultipartFile file,
                                  @VerifyParam(required = true) String filePid,
                                  @VerifyParam(required = true) String fileName,
                                  @VerifyParam(required = true) String fileMd5,
                                  @VerifyParam(required = true) Integer chunkIndex,
-                                 @VerifyParam(required = true) Integer chunks,
-                                 String category) {
+                                 @VerifyParam(required = true) Integer chunks) {
         SessionWebUserDto userDto = getUserInfoFromSession(session);
-        UploadResultDto uploadResultDto = fileInfoService.uploadFile(userDto, file, fileId, fileInfoQuery, filePid, fileName, fileMd5, chunkIndex, chunks);
+        UploadResultDto uploadResultDto = fileInfoService.uploadFile(userDto, file, fileId, filePid, fileName, fileMd5, chunkIndex, chunks);
         return getSuccessResponseVo(uploadResultDto);
     }
 

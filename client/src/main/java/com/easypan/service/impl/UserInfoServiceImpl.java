@@ -15,6 +15,7 @@ import com.easypan.entity.query.UserInfoQuery;
 import com.easypan.exception.BusinessException;
 import com.easypan.mappers.UserInfoMapper;
 import com.easypan.service.EmailCodeService;
+import com.easypan.service.FileInfoService;
 import com.easypan.service.UserInfoService;
 import com.easypan.utils.StringUtils;
 import org.apache.commons.lang3.ArrayUtils;
@@ -41,8 +42,8 @@ public class UserInfoServiceImpl implements UserInfoService {
     @Resource
     private EmailCodeService emailCodeService;
 
-    //    @Resource
-//    private FileInfoMapper fileInfoMapper;
+    @Resource
+    private FileInfoService fileInfoService;
     @Resource
     private RedisComponent redisComponent;
 
@@ -186,6 +187,7 @@ public class UserInfoServiceImpl implements UserInfoService {
     public Integer deleteUserInfoByNickname(String nickname) {
         return this.userInfoMapper.deleteByNickname(nickname);
     }
+
     /**
      * 登录
      **/
@@ -243,7 +245,7 @@ public class UserInfoServiceImpl implements UserInfoService {
         userInfo.setNickname(nickName);
         userInfo.setEmail(email);
         userInfo.setJoinTime(new Date());
-        userInfo.setUseSpace(0L);
+        userInfo.setUseSpace(fileInfoService.selectUseSpace(userId));
         userInfo.setStatus(UserStatusEnum.ENABLE.getStatus());
         userInfo.setPassword(StringUtils.encodeByMD5(password));
         SysSettingsDto sysSettingDto = redisComponent.getSysSettingDto();
@@ -266,5 +268,14 @@ public class UserInfoServiceImpl implements UserInfoService {
         UserInfo updateInfo = new UserInfo();
         updateInfo.setPassword(StringUtils.encodeByMD5(password));
         this.userInfoMapper.updateByEmail(updateInfo, email);
+    }
+
+    /**
+     * @date: 2023/7/25 11:00
+     * 修改用户空间
+     **/
+    @Override
+    public Integer updateUseSpace(String userId, Long useSpace, Long totalSize) {
+        return this.userInfoMapper.updateUseSpace(userId, useSpace, totalSize);
     }
 }
