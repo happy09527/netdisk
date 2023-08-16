@@ -15,6 +15,8 @@ import com.easypan.service.FileInfoService;
 import com.easypan.utils.CopyUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -53,6 +55,7 @@ public class FileInfoController extends CommonFileController {
         PaginationResultVo resultVo = fileInfoService.findListByPage(query);
         return getSuccessResponseVo(convert2PaginationVO(resultVo, FileInfoVO.class));
     }
+
     /**
      * @date: 2023/7/25 9:33
      * 上传文件服务
@@ -72,5 +75,10 @@ public class FileInfoController extends CommonFileController {
         return getSuccessResponseVo(uploadResultDto);
     }
 
-
+    @GetMapping("/getImage/{imageFolder}/{imageName}")
+    @GlobalInterceptor(checkParams = true)
+    public void getImage(HttpServletResponse response, @PathVariable(name = "imageFolder") String imageFolder,
+                         @PathVariable(name = "imageName") String imageName) {
+        super.getImage(response, imageFolder, imageName);
+    }
 }

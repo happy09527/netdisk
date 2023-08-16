@@ -4,8 +4,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
+import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
+import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -47,6 +49,21 @@ public class RedisUtils<V> {
         } catch (Exception e) {
             logger.error("设置redis Key：{}，value：{}失败", key, value);
             return false;
+        }
+    }
+
+    /**
+     * 删除缓存
+     *
+     * @param key 可以传一个值 或多个
+     */
+    public void delete(String... key) {
+        if (key != null && key.length > 0) {
+            if (key.length == 1) {
+                redisTemplate.delete(key[0]);
+            } else {
+                redisTemplate.delete((Collection<String>) CollectionUtils.arrayToList(key));
+            }
         }
     }
 }

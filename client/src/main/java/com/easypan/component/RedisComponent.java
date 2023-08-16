@@ -94,4 +94,8 @@ public class RedisComponent {
         }
         return 0L;
     }
+
+    public void removeFileTempSize(String userId, String fileId) {
+        redisUtils.delete(Constants.REDIS_KEY_USER_FILE_TEMP_SIZE + userId + fileId);
+    }
 }
