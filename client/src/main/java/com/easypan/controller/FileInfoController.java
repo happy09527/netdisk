@@ -74,11 +74,31 @@ public class FileInfoController extends CommonFileController {
         UploadResultDto uploadResultDto = fileInfoService.uploadFile(userDto, file, fileId, filePid, fileName, fileMd5, chunkIndex, chunks);
         return getSuccessResponseVo(uploadResultDto);
     }
-
+    // 获取缩略图
     @GetMapping("/getImage/{imageFolder}/{imageName}")
     @GlobalInterceptor(checkParams = true)
     public void getImage(HttpServletResponse response, @PathVariable(name = "imageFolder") String imageFolder,
                          @PathVariable(name = "imageName") String imageName) {
         super.getImage(response, imageFolder, imageName);
     }
+
+    // 获取视频信息（时长）、视频分片
+    @GetMapping("/ts/getVideoInfo/{fileId}")
+    @GlobalInterceptor(checkParams = true)
+    public void getVideoInfo(HttpServletResponse response,
+                             HttpSession session,
+                             @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        super.getFile(response, fileId, webUserDto.getUserId());
+    }
+
+    // 获取文件信息。非视频文件，不用进入文件夹，专用接口
+    @RequestMapping("/getFile/{fileId}")
+    public void getFile(HttpServletResponse response,
+                        HttpSession session,
+                        @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        super.getFile(response, fileId, webUserDto.getUserId());
+    }
+
 }

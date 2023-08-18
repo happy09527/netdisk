@@ -62,6 +62,11 @@ public class FileInfoServiceImpl implements FileInfoService {
     @Lazy
     private FileInfoServiceImpl fileInfoService;
 
+    @Override
+    public FileInfo getFileInfoByFileIdAndUserId(String realFileId, String userId) {
+        return fileInfoMapper.selectByFileIdAndUserId(realFileId, userId);
+    }
+
     /**
      * 分页查询方法
      */
@@ -267,7 +272,7 @@ public class FileInfoServiceImpl implements FileInfoService {
                 cutFile4Video(fileId, targetFilePath);
                 //视频生成缩略图
                 cover = month + "/" + currentUserFolderName + Constants.IMAGE_PNG_SUFFIX;
-                String coverPath = targetFolderName + " /" + cover;
+                String coverPath = targetFolderName + "/" + cover;
                 ScaleFilter.createCover4Video(new File(targetFilePath), Constants.LENGTH_150, new File(coverPath));
             } else if (FileTypeEnums.IMAGE == fileTypeEnum) {
                 //生成缩略图

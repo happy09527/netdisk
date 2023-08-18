@@ -15,7 +15,7 @@ import java.util.List;
  */
 public interface FileInfoService {
 
-
+    FileInfo getFileInfoByFileIdAndUserId(String realFileId, String userId);
 
     PaginationResultVo<FileInfo> findListByPage(FileInfoQuery param);
 

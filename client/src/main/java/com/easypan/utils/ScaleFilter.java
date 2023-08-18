@@ -59,9 +59,11 @@ public class ScaleFilter {
     }
 
     public static void main(String[] args) {
-        compressImageWidthPercentage(new File("C:\\Users\\Administrator\\Pictures\\微信图片_20230107141436.png"), new BigDecimal(0.7),
-                new File("C:\\Users\\Administrator" +
-                        "\\Pictures" +
-                        "\\微信图片_202106281029182.jpg"));
+//        compressImageWidthPercentage(new File("C:\\Users\\Administrator\\Pictures\\微信图片_20230107141436.png"), new BigDecimal(0.7),
+//                new File("C:\\Users\\Administrator" +
+//                        "\\Pictures" +
+//                        "\\微信图片_202106281029182.jpg"));
+        createCover4Video(new File("C:\\Users\\86199\\Desktop\\C3EAEB2041813F8D57A6E3632E08CF3B.mp4"),
+                150,new File("C:\\Users\\86199\\Desktop\\C3EAEB2041813F8D57A6E3632E08CF3B_png"));
     }
 }
