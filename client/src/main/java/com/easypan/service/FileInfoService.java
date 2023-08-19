@@ -23,4 +23,8 @@ public interface FileInfoService {
     UploadResultDto uploadFile(SessionWebUserDto userDto, MultipartFile file, String fileId, String filePid, String fileName, String fileMd5, Integer chunkIndex, Integer chunks);
 
     Long selectUseSpace(String userId);
+
+    FileInfo newFolder(String filePid, String userId, String fileName);
+
+    List<FileInfo> findListByParam(FileInfoQuery infoQuery);
 }

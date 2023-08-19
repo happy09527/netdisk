@@ -239,7 +239,7 @@ public class UserInfoController extends ABaseController {
 
     /**
      * @date: 2023/7/23 22:57
-     * 推出登录
+     * 退出登录
      **/
     @RequestMapping("/logout")
     public ResponseVo logout(HttpSession session) {

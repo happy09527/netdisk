@@ -415,4 +415,49 @@ public class FileInfoServiceImpl implements FileInfoService {
     public Long selectUseSpace(String userId) {
         return this.fileInfoMapper.selectUseSpace(userId);
     }
+
+    /**
+     * @date: 2023/8/19 15:32
+     * 新建文件夹
+     */
+    @Override
+    public FileInfo newFolder(String filePid, String userId, String fileName) {
+        checkFileName(filePid, fileName, FileFolderTypeEnums.FOLDER.getType(), userId);
+        Date curDate = new Date();
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setFileId(StringUtils.getRandomString(Constants.LENGTH_10));
+        fileInfo.setUserId(userId);
+        fileInfo.setFilePid(filePid);
+        fileInfo.setFileName(fileName);
+        fileInfo.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+        fileInfo.setCreateTime(curDate);
+        fileInfo.setLastUpdateTime(curDate);
+        fileInfo.setStatus(FileStatusEnums.USING.getStatus());
+        fileInfo.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        fileInfoMapper.insert(fileInfo);
+        return fileInfo;
+    }
+
+    // 通过参数查看文件夹下文件列
+    @Override
+    public List<FileInfo> findListByParam(FileInfoQuery infoQuery) {
+        return fileInfoMapper.selectList(infoQuery);
+    }
+
+    /**
+     * @date: 2023/8/19 15:34
+     * 检查文件名是否重复
+     */
+    private void checkFileName(String filePid, String fileName, Integer folderType, String userId) {
+        FileInfoQuery fileInfoQuery = new FileInfoQuery();
+        fileInfoQuery.setFolderType(folderType);
+        fileInfoQuery.setFileName(fileName);
+        fileInfoQuery.setFilePid(filePid);
+        fileInfoQuery.setUserId(userId);
+        fileInfoQuery.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        Integer count = this.fileInfoMapper.selectCount(fileInfoQuery);
+        if (count > 0) {
+            throw new BusinessException("此目录下已存在同名文件，请修改名称");
+        }
+    }
 }

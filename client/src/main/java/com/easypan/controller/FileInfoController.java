@@ -7,6 +7,7 @@ import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.dto.UploadResultDto;
 import com.easypan.entity.enums.FileCategoryEnums;
 import com.easypan.entity.enums.FileDelFlagEnums;
+import com.easypan.entity.pojo.FileInfo;
 import com.easypan.entity.query.FileInfoQuery;
 import com.easypan.entity.vo.FileInfoVO;
 import com.easypan.entity.vo.PaginationResultVo;
@@ -15,10 +16,7 @@ import com.easypan.service.FileInfoService;
 import com.easypan.utils.CopyUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.annotation.Resource;
@@ -74,6 +72,7 @@ public class FileInfoController extends CommonFileController {
         UploadResultDto uploadResultDto = fileInfoService.uploadFile(userDto, file, fileId, filePid, fileName, fileMd5, chunkIndex, chunks);
         return getSuccessResponseVo(uploadResultDto);
     }
+
     // 获取缩略图
     @GetMapping("/getImage/{imageFolder}/{imageName}")
     @GlobalInterceptor(checkParams = true)
@@ -101,4 +100,23 @@ public class FileInfoController extends CommonFileController {
         super.getFile(response, fileId, webUserDto.getUserId());
     }
 
+    // 新建文件夹
+    @PostMapping("/newFoloder")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo newFolder(HttpSession session,
+                                @VerifyParam(required = true) String filePid,
+                                @VerifyParam(required = true) String fileName) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        FileInfo fileInfo = fileInfoService.newFolder(filePid, webUserDto.getUserId(), fileName);
+        return getSuccessResponseVo(fileInfo);
+    }
+
+    // 获取当前目录信息
+    @PostMapping("/getFolderInfo")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo getFolderInfo(HttpSession session,
+                                    @VerifyParam(required = true) String path) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        return super.getFolderInfo(path, webUserDto.getUserId());
+    }
 }

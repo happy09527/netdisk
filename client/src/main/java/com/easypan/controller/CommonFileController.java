@@ -1,15 +1,26 @@
 package com.easypan.controller;
 
+import com.easypan.annotation.GlobalInterceptor;
+import com.easypan.annotation.VerifyParam;
 import com.easypan.config.APPConfig;
 import com.easypan.entity.constants.Constants;
+import com.easypan.entity.dto.SessionWebUserDto;
 import com.easypan.entity.enums.FileCategoryEnums;
+import com.easypan.entity.enums.FileFolderTypeEnums;
 import com.easypan.entity.pojo.FileInfo;
+import com.easypan.entity.query.FileInfoQuery;
+import com.easypan.entity.vo.FolderVO;
+import com.easypan.entity.vo.ResponseVo;
 import com.easypan.service.FileInfoService;
+import com.easypan.utils.CopyUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PostMapping;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.File;
+import java.util.List;
 
 /**
  * @author: ZhangX
@@ -76,5 +87,23 @@ public class CommonFileController extends ABaseController {
             return;
         }
         readFile(response,filePath);
+    }
+
+    // 获取当前目录信息
+    public ResponseVo getFolderInfo(String path, String userId) {
+        String[] pathArray = path.split("/");
+        FileInfoQuery infoQuery = new FileInfoQuery();
+        infoQuery.setUserId(userId);
+        infoQuery.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+        infoQuery.setFileIdArray(pathArray);
+        /**
+         * eg:
+         * StringUtils.join(["a", "b", "c"], "--")  = "a--b--c"
+         */
+        // order by field("fileId1", "fileId2" ....)
+        String orderBy = "field(file_id,\"" + StringUtils.join(pathArray, "\",\"") + "\")";
+        infoQuery.setOrderBy(orderBy);
+        List<FileInfo> fileInfoList = fileInfoService.findListByParam(infoQuery);
+        return getSuccessResponseVo(CopyUtils.copyList(fileInfoList, FolderVO.class));
     }
 }

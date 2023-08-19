@@ -75,7 +75,7 @@ public class ABaseController {
     /**
      * @date: 2023/7/23 20:20
      * 从httpSession中获取当前用户信息
-     **/
+     */
     public SessionWebUserDto getUserInfoFromSession(HttpSession session) {
         SessionWebUserDto sessionAttribute = (SessionWebUserDto) session.getAttribute(Constants.SESSION_KEY);
         return sessionAttribute;
@@ -84,7 +84,7 @@ public class ABaseController {
     /**
      * @date: 2023/7/24 22:02
      * 将对象几个属性去除
-     **/
+     */
     protected <S, T> PaginationResultVo<T> convert2PaginationVO(PaginationResultVo<S> result, Class<T> clazz) {
         PaginationResultVo<T> resultVO = new PaginationResultVo<>();
         resultVO.setList(CopyUtils.copyList(result.getList(), clazz));
