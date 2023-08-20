@@ -37,6 +37,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 
 /**
@@ -444,9 +446,93 @@ public class FileInfoServiceImpl implements FileInfoService {
         return fileInfoMapper.selectList(infoQuery);
     }
 
+    // 文件重命名
+    @Override
+    public FileInfo rename(String fileName, String fileId, String userId) {
+        FileInfo fileInfo = fileInfoMapper.selectByFileIdAndUserId(fileId, userId);
+        if (fileInfo == null) {
+            throw new BusinessException("文件不存在");
+        }
+        if (fileInfo.getFileName().equals(fileName)) {
+            return fileInfo;
+        }
+        checkFileName(fileInfo.getFilePid(), fileName, fileInfo.getFolderType(), userId);
+        //文件获取后缀
+        if (FileFolderTypeEnums.FILE.getType().equals(fileInfo.getFolderType())) {
+            fileName = fileName + StringUtils.getFileSuffix(fileInfo.getFileName());
+        }
+        fileInfo.setFileName(fileName);
+        Date curDate = new Date();
+        FileInfo dbInfo = new FileInfo();
+        dbInfo.setFileName(fileName);
+        dbInfo.setLastUpdateTime(curDate);
+        fileInfoMapper.updateByFileIdAndUserId(dbInfo, fileId, userId);
+        return fileInfo;
+    }
+
+    @Override
+    public List<FileInfo> loadAllFolder(String userId, String filePid, String currentFileIds) {
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(userId);
+        query.setFilePid(filePid);
+        query.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+        if (!StringUtils.isEmpty(currentFileIds)) {
+            query.setExcludeFileIdArray(currentFileIds.split(","));
+        }
+        query.setDelFlag(FileDelFlagEnums.USING.getFlag());
+        query.setOrderBy("create_time desc");
+        return fileInfoService.findListByParam(query);
+    }
+
+    // 移动文件位置
+    @Override
+    public void changeFileFolder(String fileIds, String filePid, String userId) {
+        if (fileIds.equals(filePid)) {
+            //移动到自己
+            throw new BusinessException(ResponseCodeEnum.CODE_600);
+        }
+        // 以filePid当做fileId加上userId查询
+        if (!Constants.ZERO_STR.equals(filePid)) {
+            FileInfo fileInfo = getFileInfoByFileIdAndUserId(filePid, userId);
+            // 当前用户移动到的目录不存在或者不是目录
+            if (fileInfo == null || !FileDelFlagEnums.USING.getFlag().equals(fileInfo.getDelFlag())) {
+                throw new BusinessException(ResponseCodeEnum.CODE_600);
+            }
+        }
+        // 如果移动到的目录正常，查询出toFile下的所有文件
+        FileInfoQuery fileInfoQuery = new FileInfoQuery();
+        fileInfoQuery.setUserId(userId);
+        fileInfoQuery.setFilePid(filePid);
+        List<FileInfo> fileInfos = fileInfoMapper.selectList(fileInfoQuery);
+        // 将查询出的list集合收集为以fileName为key, 以集合元素fileInfo为值
+        // (file1, file2) -> file2) 如果两个文件名字相同，取第二个
+        Map<String, FileInfo> dbFileNameMap = fileInfos.stream()
+                .collect(Collectors.toMap(FileInfo::getFileName,
+                        Function.identity(),
+                        (file1, file2) -> file2));
+        //查询选中的文件
+        fileInfoQuery = new FileInfoQuery();
+        fileInfoQuery.setUserId(userId);
+        fileInfoQuery.setFileIdArray(fileIds.split(","));
+        List<FileInfo> selectFileList = findListByParam(fileInfoQuery);
+
+        //如果存在名字相同，则将所选文件重命名
+        for (FileInfo item : selectFileList) {
+            FileInfo rootFileInfo = dbFileNameMap.get(item.getFileName());
+            FileInfo updateInfo = new FileInfo();
+            if (rootFileInfo != null) {
+                //文件名已经存在，重命名被还原的文件名
+                String fileName = StringUtils.rename(item.getFileName());
+                updateInfo.setFileName(fileName);
+            }
+            updateInfo.setFilePid(filePid);
+            fileInfoMapper.updateByFileIdAndUserId(updateInfo, item.getFileId(), userId);
+        }
+    }
+
     /**
      * @date: 2023/8/19 15:34
-     * 检查文件名是否重复
+     * 检查文件夹名是否重复
      */
     private void checkFileName(String filePid, String fileName, Integer folderType, String userId) {
         FileInfoQuery fileInfoQuery = new FileInfoQuery();

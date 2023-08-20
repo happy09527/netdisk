@@ -119,4 +119,40 @@ public class FileInfoController extends CommonFileController {
         SessionWebUserDto webUserDto = getUserInfoFromSession(session);
         return super.getFolderInfo(path, webUserDto.getUserId());
     }
+
+    // 文件重命名
+    @PostMapping("/rename")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo rename(HttpSession session,
+                             @VerifyParam(required = true) String fileName,
+                             @VerifyParam(required = true) String fileId) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        FileInfo fileInfo = fileInfoService.rename(fileName, fileId, webUserDto.getUserId());
+        return getSuccessResponseVo(fileInfo);
+    }
+
+    // 加载除自己外的全部文件夹
+    @PostMapping("/loadAllFolder")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo loadAllFolder(HttpSession session,
+                                    @VerifyParam(required = true) String filePid,
+                                    String currentFileIds) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+
+        List<FileInfo> fileInfoList = fileInfoService.loadAllFolder(
+                getUserInfoFromSession(session).getUserId(), filePid, currentFileIds);
+
+        return getSuccessResponseVo(CopyUtils.copyList(fileInfoList, FileInfoVO.class));
+    }
+
+    // 移动文件
+    @PostMapping("/changeFileFolder")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo changeFileFolder(HttpSession session,
+                                       @VerifyParam(required = true) String fileIds,
+                                       @VerifyParam(required = true) String filePid) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        fileInfoService.changeFileFolder(fileIds, filePid, webUserDto.getUserId());
+        return getSuccessResponseVo(null);
+    }
 }

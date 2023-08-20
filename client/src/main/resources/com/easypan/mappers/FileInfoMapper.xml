@@ -169,7 +169,7 @@
     <select id="selectList" resultMap="base_result_map">
         SELECT
         <include refid="base_column_list"/>
-        <if test="query.queryNickName!=null and query.queryNickName">
+        <if test="query.queryNickName != null and query.queryNickName">
             ,(select nick_name from db_user_info u where u.user_id = f.user_id) nickName
         </if>
         FROM db_file_info f

@@ -27,4 +27,10 @@ public interface FileInfoService {
     FileInfo newFolder(String filePid, String userId, String fileName);
 
     List<FileInfo> findListByParam(FileInfoQuery infoQuery);
+
+    FileInfo rename(String fileName, String fileId, String userId);
+
+    List<FileInfo> loadAllFolder(String userId, String filePid, String currentFileIds);
+
+    void changeFileFolder(String fileIds, String filePid, String userId);
 }
