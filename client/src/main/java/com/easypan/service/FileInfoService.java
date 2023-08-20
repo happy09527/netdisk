@@ -33,4 +33,6 @@ public interface FileInfoService {
     List<FileInfo> loadAllFolder(String userId, String filePid, String currentFileIds);
 
     void changeFileFolder(String fileIds, String filePid, String userId);
+
+    void removeFile2RecycleBatch(String userId, String fileIds);
 }

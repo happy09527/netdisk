@@ -1,5 +1,6 @@
 package com.easypan.component;
 
+import com.easypan.entity.dto.DownloadFileDto;
 import com.easypan.entity.pojo.FileInfo;
 import com.easypan.entity.query.FileInfoQuery;
 import com.easypan.mappers.FileInfoMapper;
@@ -95,7 +96,19 @@ public class RedisComponent {
         return 0L;
     }
 
+    // 删除文件临时空间大小
     public void removeFileTempSize(String userId, String fileId) {
         redisUtils.delete(Constants.REDIS_KEY_USER_FILE_TEMP_SIZE + userId + fileId);
+    }
+
+    // 保存下载信息
+    public void saveDownloadCode(String code, DownloadFileDto downloadFileDto) {
+        redisUtils.setExpires(Constants.REDIS_KEY_DOWNLOAD + code,
+                downloadFileDto, Constants.REDIS_KEY_EXPIRES_FIVE_MIN);
+    }
+
+    // 获取下载文件信息
+    public DownloadFileDto getDownloadCode(String code) {
+        return (DownloadFileDto) redisUtils.get(Constants.REDIS_KEY_DOWNLOAD + code);
     }
 }

@@ -155,4 +155,32 @@ public class FileInfoController extends CommonFileController {
         fileInfoService.changeFileFolder(fileIds, filePid, webUserDto.getUserId());
         return getSuccessResponseVo(null);
     }
+
+    // 创建下载链接
+    @PostMapping("/createDownloadUrl/{fileId}")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo createDownloadUrl(HttpSession session,
+                                        @PathVariable("fileId") @VerifyParam(required = true) String fileId) {
+        return super.createDownloadUrl(fileId, getUserInfoFromSession(session).getUserId());
+    }
+
+    // 无需登陆校验
+    @GetMapping("/download/{code}")
+    @GlobalInterceptor(checkLogin = false, checkParams = true)
+    public void download(HttpServletRequest request,
+                         HttpServletResponse response,
+                         @PathVariable("code") @VerifyParam(required = true) String code) throws Exception {
+        super.download(request, response, code);
+    }
+    // 删除文件
+    @PostMapping("/delFile")
+    @GlobalInterceptor(checkParams = true)
+    public ResponseVo delFile(HttpSession session,
+                              @VerifyParam(required = true) String fileIds) {
+        SessionWebUserDto webUserDto = getUserInfoFromSession(session);
+        fileInfoService.removeFile2RecycleBatch(webUserDto.getUserId(), fileIds);
+        return getSuccessResponseVo(null);
+    }
+
+
 }

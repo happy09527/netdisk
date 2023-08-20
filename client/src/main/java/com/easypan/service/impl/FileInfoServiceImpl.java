@@ -530,6 +530,68 @@ public class FileInfoServiceImpl implements FileInfoService {
         }
     }
 
+    // 删除文件
+    @Override
+    @Transactional
+    public void removeFile2RecycleBatch(String userId, String fileIds) {
+        // 查询该用户需删除的fileIds并且状态为使用中的文件
+        List<FileInfo> fileInfoList = selectListByIdsAndDelFlag(userId, fileIds, FileDelFlagEnums.USING.getFlag());
+        if (fileInfoList.isEmpty()) {
+            return;
+        }
+        // 如果不为空
+        List<String> delFilePidList = new ArrayList<>();
+        fileInfoList.stream()
+                .filter(fileInfo ->
+                        fileInfo.getFolderType().equals(FileFolderTypeEnums.FOLDER.getType()))
+                .forEach(fileInfo ->
+                        findAllSubFolderFileIdList(delFilePidList, userId, fileInfo.getFileId(), FileDelFlagEnums.USING.getFlag()));
+
+        //将目录下的所有文件更新为已删除
+        if (!delFilePidList.isEmpty()) {
+            FileInfo updateInfo = new FileInfo();
+            updateInfo.setDelFlag(FileDelFlagEnums.DEL.getFlag());
+            this.fileInfoMapper.updateFileDelFlagBatch(updateInfo, userId, delFilePidList,
+                    null, FileDelFlagEnums.USING.getFlag());
+        }
+
+        //将选中的文件更新为回收站
+        List<String> delFileIdList = Arrays.asList(fileIds.split(","));
+        FileInfo fileInfo = new FileInfo();
+        fileInfo.setRecoveryTime(new Date());
+        fileInfo.setDelFlag(FileDelFlagEnums.RECYCLE.getFlag());
+        this.fileInfoMapper.updateFileDelFlagBatch(fileInfo, userId, null,
+                delFileIdList, FileDelFlagEnums.USING.getFlag());
+    }
+
+    // 通过ids查找所有的文件信息
+    private List<FileInfo> selectListByIdsAndDelFlag(String userId, String fileIds, Integer delFlag) {
+        String[] fileIdArray = fileIds.split(",");
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(userId);
+        query.setFileIdArray(fileIdArray);
+        query.setDelFlag(delFlag);
+        return fileInfoMapper.selectList(query);
+    }
+
+    // 递归查找文件夹下的所有文件
+    private void findAllSubFolderFileIdList(List<String> fileIdList, String userId, String fileId, Integer delFlag) {
+        // 首先将自己添加进删除集合
+        fileIdList.add(fileId);
+
+        // 然后查找自己下面的所有的文件夹
+        FileInfoQuery query = new FileInfoQuery();
+        query.setUserId(userId);
+        query.setFilePid(fileId);
+        query.setDelFlag(delFlag);
+        query.setFolderType(FileFolderTypeEnums.FOLDER.getType());
+        List<FileInfo> fileInfoList = this.fileInfoMapper.selectList(query);
+
+        for (FileInfo fileInfo : fileInfoList) {
+            findAllSubFolderFileIdList(fileIdList, userId, fileInfo.getFileId(), delFlag);
+        }
+    }
+
     /**
      * @date: 2023/8/19 15:34
      * 检查文件夹名是否重复
