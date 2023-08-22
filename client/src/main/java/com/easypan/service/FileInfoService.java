@@ -35,4 +35,8 @@ public interface FileInfoService {
     void changeFileFolder(String fileIds, String filePid, String userId);
 
     void removeFile2RecycleBatch(String userId, String fileIds);
+
+    void recoverFile(String fileIds, String userId);
+
+    void deleteFile(String fileIds, String userId, boolean adminOp);
 }

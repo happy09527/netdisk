@@ -172,6 +172,7 @@ public class FileInfoController extends CommonFileController {
                          @PathVariable("code") @VerifyParam(required = true) String code) throws Exception {
         super.download(request, response, code);
     }
+
     // 删除文件
     @PostMapping("/delFile")
     @GlobalInterceptor(checkParams = true)
