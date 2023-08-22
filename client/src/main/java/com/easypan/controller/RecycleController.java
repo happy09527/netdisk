@@ -23,7 +23,7 @@ import javax.servlet.http.HttpSession;
  */
 @RestController
 @RequestMapping("/recycle")
-public class RecycleController extends CommonFileController{
+public class RecycleController extends CommonFileController {
     @Resource
     private FileInfoService fileInfoService;
 
@@ -40,20 +40,22 @@ public class RecycleController extends CommonFileController{
         PaginationResultVo result = fileInfoService.findListByPage(query);
         return getSuccessResponseVo(convert2PaginationVO(result, FileInfoVO.class));
     }
+
     // 恢复回收站文件
     @PostMapping("/recoverFile")
     @GlobalInterceptor(checkParams = true)
     public ResponseVo recoverFile(HttpSession session, @VerifyParam(required = true) String fileIds) {
         SessionWebUserDto userDto = getUserInfoFromSession(session);
-        fileInfoService.recoverFile(fileIds,userDto.getUserId());
+        fileInfoService.recoverFile(fileIds, userDto.getUserId());
         return getSuccessResponseVo(null);
     }
+
     // 删除回收站文件
-    @PostMapping("/deleteFile")
+    @PostMapping("/delFile")
     @GlobalInterceptor(checkParams = true)
     public ResponseVo deleteFile(HttpSession session, @VerifyParam(required = true) String fileIds) {
         SessionWebUserDto userDto = getUserInfoFromSession(session);
-        fileInfoService.deleteFile(fileIds,userDto.getUserId(),false);
+        fileInfoService.deleteFile(fileIds, userDto.getUserId(), false);
         return getSuccessResponseVo(null);
     }
 }
